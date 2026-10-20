@@ -108,10 +108,11 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
+
 using System;
 using System.Collections.Generic;
 
-namespace Longpoint
+namespace WWBS
 {
     class Weapon
     {
@@ -148,12 +149,31 @@ namespace Longpoint
         }
     }
 
+    class Injury
+    {
+        public string bodypart;
+        public string description;
+        public int severity;
+
+        public Injury(
+            string bodypart,
+            string description,
+            int severity)
+        {
+            this.bodypart = bodypart;
+            this.description = description;
+            this.severity = severity;
+        }
+    }
+
     class Unit
     {
         public string name = string.Empty;
         public int momentum;
         public int velocity;
 
+        public bool isalive = true;
+        public bool isconscious = true;
         public Weapon? primary;
         public Weapon? secondary;
 
@@ -168,13 +188,18 @@ namespace Longpoint
                 return;
             }
 
+            if (isalive == false)
+            {
+                Console.WriteLine(target.name + " is already defeated.");
+                return;
+            }
+
             target.TakeDamage(primary.damage);
 
             Console.WriteLine(
-                name + " attacks " +
-                target.name + " with " +
-                primary.name + " for " +
-                primary.damage + " damage."
+                name + " attacks " + target.name +
+                " with " + primary.name +
+                " for " + primary.damage + " damage."
             );
         }
 
@@ -186,13 +211,18 @@ namespace Longpoint
                 return;
             }
 
+            if (isalive == false)
+            {
+                Console.WriteLine(target.name + " is already defeated.");
+                return;
+            }
+
             target.TakeDamage(secondary.damage);
 
             Console.WriteLine(
-                name + " attacks " +
-                target.name + " with " +
-                secondary.name + " for " +
-                secondary.damage + " damage."
+                name + " attacks " + target.name +
+                " with " + secondary.name +
+                " for " + secondary.damage + " damage."
             );
         }
 
@@ -204,87 +234,99 @@ namespace Longpoint
                 return;
             }
 
+            if (isalive == false)
+            {
+                Console.WriteLine(target.name + " is already defeated.");
+                return;
+            }
+
             target.TakeDamage(primary.headshotdamage);
 
             Console.WriteLine(
-                name + " headshots " +
-                target.name + " with " +
-                primary.name + " for " +
-                primary.headshotdamage +
-                " damage."
+                name + " headshots " + target.name +
+                " with " + primary.name +
+                " for " + primary.headshotdamage + " damage."
             );
         }
 
         public void TakeDamage(int damage)
         {
-            health -= damage;
-
-            if (health < 0)
+            if (damage <= 0)
             {
-                health = 0;
+                Console.WriteLine("Damage must be greater than zero.");
+                return;
             }
+
+            if (isalive == false)
+            {
+                Console.WriteLine(name + " is already defeated.");
+                return;
+            }
+
+            if (isalive == false)
+            {
+                Console.WriteLine(name + " has been defeated.");
+            }
+        }
+
+        public void Heal(int amount)
+        {
+            if (amount <= 0)
+            {
+                Console.WriteLine("Healing must be greater than zero.");
+                return;
+            }
+
+            if (isalive == false)
+            {
+                Console.WriteLine(name + " cannot heal after being defeated.");
+                return;
+            } 
+          }
+
+        public void ReceiveInjury(Injury injury)
+        {
+            injuries.Add(injury);
 
             Console.WriteLine(
-                name + " now has " +
-                health +
-                " health."
+                name + " suffers an injury to the " +
+                injury.bodypart + ": " +
+                injury.description +
+                " (Severity: " + injury.severity + ")"
             );
-
-            if (health == 0)
-            {
-                Console.WriteLine(
-                    name + " has been defeated."
-                );
-            }
         }
 
         public void AddItem(Item item)
         {
             inventory.Add(item);
 
-            Console.WriteLine(
-                name + " picked up " +
-                item.name + "."
-            );
+            Console.WriteLine(name + " picked up " + item.name + ".");
         }
 
         public void UseItem(int itemNumber)
         {
             if (itemNumber < 0 || itemNumber >= inventory.Count)
             {
-                Console.WriteLine(
-                    name + " does not have that item."
-                );
-
+                Console.WriteLine(name + " does not have that item.");
                 return;
             }
 
             Item item = inventory[itemNumber];
-
-            health += item.healing;
-
-            if (health > maxHealth)
+            
+            if (isalive == false)
             {
-                health = maxHealth;
+                Console.WriteLine(name + " cannot use items after being defeated.");
+                return;
             }
 
-            Console.WriteLine(
-                name + " uses " +
-                item.name +
-                " and restores " +
-                item.healing +
-                " health. Current health: " +
-                health
-            );
+            Console.WriteLine(name + " uses " + item.name + ".");
 
             inventory.RemoveAt(itemNumber);
         }
 
         public void ShowInventory()
         {
-            Console.WriteLine(
-                name + "'s inventory:"
-            );
+            Console.WriteLine(name + "'s inventory:");
 
             if (inventory.Count == 0)
             {
@@ -295,11 +337,8 @@ namespace Longpoint
             for (int i = 0; i < inventory.Count; i++)
             {
                 Console.WriteLine(
-                    i + ": " +
-                    inventory[i].name +
-                    " (heals " +
-                    inventory[i].healing +
-                    ")"
+                    i + ": " + inventory[i].name +
+                    " (heals " + inventory[i].healing + ")"
                 );
             }
         }
@@ -309,87 +348,27 @@ namespace Longpoint
             target.velocity += 20;
 
             Console.WriteLine(
-                name + " yeets " +
-                target.name +
-                ". " +
-                target.name +
-                "'s velocity is now " +
-                target.velocity +
-                "."
+                name + " yeets " + target.name + ". " +
+                target.name + "'s velocity is now " +
+                target.velocity + "."
             );
         }
     }
-    class Injury
-    {
-        public string bodypart;
-        public string description;
-        public int severity;
-        
-        public Injury(
-            string bodypart,
-            string description,
-            int severity)
-        {
-            this.bodypart = bodypart;
-            this.description = description;
-            this.severity = severity;
-         }
-         
-        public void ReceiveInjury(Injury injury)
-        {
-            injuries.Add(injury);
-
-            Console.WriteLine(
-            name + " suffers an injury to the " +
-            injury.bodyPart + ": " +
-            injury.description
-            );
-}
-      }
 
     // =========================
     // CLASSES
     // =========================
 
-    class ManAtArms : Unit
-    {
-    }
-
-    class Archer : Unit
-    {
-    }
-
-    class Gunslinger : Unit
-    {
-    }
-
-    class Mage : Unit
-    {
-    }
-
-    class Barbarian : Unit
-    {
-    }
-
-    class Bard : Unit
-    {
-    }
-
-    class Builder : Unit
-    {
-    }
-
-    class Medic : Unit
-    {
-    }
-
-    class Priest : Unit
-    {
-    }
-
-    class Craftsman : Unit
-    {
-    }
+    class ManAtArms : Unit { }
+    class Archer : Unit { }
+    class Gunslinger : Unit { }
+    class Mage : Unit { }
+    class Barbarian : Unit { }
+    class Bard : Unit { }
+    class Builder : Unit { }
+    class Medic : Unit { }
+    class Priest : Unit { }
+    class Craftsman : Unit { }
 
     // =========================
     // PROGRAM
@@ -399,406 +378,123 @@ namespace Longpoint
     {
         static void Main()
         {
-            // =========================
-            // MAN-AT-ARMS
-            // =========================
-
             ManAtArms manAtArms = new ManAtArms();
-
             manAtArms.name = "Man-at-Arms";
-            manAtArms.maxHealth = 100;
-            manAtArms.health = 100;
             manAtArms.momentum = 0;
             manAtArms.velocity = 5;
-
-            manAtArms.primary =
-                new Weapon(
-                    "Spear",
-                    30,
-                    150,
-                    3m,
-                    0.5m
-                );
-
-            manAtArms.secondary =
-                new Weapon(
-                    "Arming Sword",
-                    20,
-                    100,
-                    1m,
-                    0.25m
-                );
-
-
-            // =========================
-            // ARCHER
-            // =========================
+            manAtArms.primary = new Weapon("Spear", 30, 150, 3m, 0.5m);
+            manAtArms.secondary = new Weapon("Arming Sword", 20, 100, 1m, 0.25m);
 
             Archer archer = new Archer();
-
             archer.name = "Archer";
-            archer.maxHealth = 100;
-            archer.health = 100;
             archer.momentum = 0;
             archer.velocity = 7;
-
-            archer.primary =
-                new Weapon(
-                    "Bow",
-                    25,
-                    150,
-                    150m,
-                    1.0m
-                );
-
-            archer.secondary =
-                new Weapon(
-                    "Arming Sword",
-                    20,
-                    100,
-                    1m,
-                    0.25m
-                );
-
-            archer.AddItem(
-                new Item("Bandage", 20)
-            );
-
-
-            // =========================
-            // GUNSLINGER
-            // =========================
+            archer.primary = new Weapon("Bow", 25, 150, 150m, 1.0m);
+            archer.secondary = new Weapon("Arming Sword", 20, 100, 1m, 0.25m);
+            archer.AddItem(new Item("Bandage", 20));
 
             Gunslinger gunslinger = new Gunslinger();
-
             gunslinger.name = "Gunslinger";
-            gunslinger.maxHealth = 100;
-            gunslinger.health = 100;
             gunslinger.momentum = 0;
             gunslinger.velocity = 10;
-
-            gunslinger.primary =
-                new Weapon(
-                    "Musket",
-                    50,
-                    150,
-                    100m,
-                    2.5m
-                );
-
-            gunslinger.secondary =
-                new Weapon(
-                    "Rapier",
-                    25,
-                    100,
-                    1.5m,
-                    0.75m
-                );
-
-
-            // =========================
-            // MAGE
-            // =========================
+            gunslinger.primary = new Weapon("Musket", 50, 150, 100m, 2.5m);
+            gunslinger.secondary = new Weapon("Rapier", 25, 100, 1.5m, 0.75m);
 
             Mage mage = new Mage();
-
             mage.name = "Mage";
-            mage.maxHealth = 100;
-            mage.health = 80;
             mage.momentum = 5;
             mage.velocity = 5;
-
-            mage.primary =
-                new Weapon(
-                    "Quarterstaff",
-                    20,
-                    70,
-                    1.8m,
-                    0.9m
-                );
-
-            mage.secondary =
-                new Weapon(
-                    "Spells",
-                    25,
-                    25,
-                    5m,
-                    1.0m
-                );
-
-
-            // =========================
-            // BARBARIAN
-            // =========================
+            mage.primary = new Weapon("Quarterstaff", 20, 70, 1.8m, 0.9m);
+            mage.secondary = new Weapon("Spells", 25, 25, 5m, 1.0m);
 
             Barbarian barbarian = new Barbarian();
-
             barbarian.name = "Barbarian";
-            barbarian.maxHealth = 110;
-            barbarian.health = 105;
             barbarian.momentum = 5;
             barbarian.velocity = 0;
-
-            barbarian.primary =
-                new Weapon(
-                    "Axe",
-                    25,
-                    150,
-                    0.75m,
-                    0.95m
-                );
-
-
-            // =========================
-            // BARD
-            // =========================
+            barbarian.primary = new Weapon("Axe", 25, 150, 0.75m, 0.95m);
 
             Bard bard = new Bard();
-
             bard.name = "Bard";
-            bard.maxHealth = 100;
-            bard.health = 100;
             bard.momentum = 0;
             bard.velocity = 0;
-
-            bard.primary =
-                new Weapon(
-                    "Lute",
-                    0,
-                    0,
-                    10m,
-                    0m
-                );
-
-            bard.secondary =
-                new Weapon(
-                    "Short Spear",
-                    30,
-                    150,
-                    2m,
-                    0.5m
-                );
-
-
-            // =========================
-            // BUILDER
-            // =========================
+            bard.primary = new Weapon("Lute", 0, 0, 10m, 0m);
+            bard.secondary = new Weapon("Short Spear", 30, 150, 2m, 0.5m);
 
             Builder builder = new Builder();
-
             builder.name = "Builder";
-            builder.maxHealth = 100;
-            builder.health = 100;
             builder.momentum = 3;
             builder.velocity = 0;
-
-            builder.primary =
-                new Weapon(
-                    "War Hammer",
-                    20,
-                    150,
-                    1.2m,
-                    1.5m
-                );
-
-            builder.secondary =
-                new Weapon(
-                    "Construction Hammer",
-                    0,
-                    0,
-                    0.3m,
-                    0m
-                );
-
-
-            // =========================
-            // MEDIC
-            // =========================
+            builder.primary = new Weapon("War Hammer", 20, 150, 1.2m, 1.5m);
+            builder.secondary = new Weapon("Construction Hammer", 0, 0, 0.3m, 0m);
 
             Medic medic = new Medic();
-
             medic.name = "Medic";
-            medic.maxHealth = 100;
-            medic.health = 100;
             medic.momentum = 0;
             medic.velocity = 0;
-
-            medic.primary =
-                new Weapon(
-                    "Bonesaw",
-                    20,
-                    95,
-                    1m,
-                    0.75m
-                );
-
-            medic.secondary =
-                new Weapon(
-                    "Medical Supplies",
-                    -50,
-                    -50,
-                    0.5m,
-                    0m
-                );
-
-
-            // =========================
-            // PRIEST
-            // =========================
+            medic.primary = new Weapon("Bonesaw", 20, 95, 1m, 0.75m);
+            medic.secondary = new Weapon("Medical Supplies", 0, 0, 0.5m, 0m);
 
             Priest priest = new Priest();
-
             priest.name = "Priest";
-            priest.maxHealth = 100;
-            priest.health = 100;
             priest.momentum = 0;
             priest.velocity = 0;
+            priest.primary = new Weapon("Crucifix", 0, 0, 10m, 6.5m);
 
-            priest.primary =
-                new Weapon(
-                    "Crucifix",
-                    0,
-                    0,
-                    10m,
-                    6.5m
-                );
-
-
-            // =========================
-            // CLASS SELECTION
-            // =========================
-
-            Console.WriteLine("<---- LONGPOINT ----o");
+            Console.WriteLine("<---- We Won't Balance Spears ----o");
             Console.WriteLine();
-
             Console.WriteLine("Select your class:");
             Console.WriteLine("1) Man-at-Arms");
             Console.WriteLine("2) Archer");
             Console.WriteLine("3) Gunslinger");
             Console.WriteLine("4) Mage");
-            Console.WriteLine("5) Coming soon...");
-
+            Console.WriteLine("5) Barbarian");
+            Console.WriteLine("6) Bard");
+            Console.WriteLine("7) Builder");
+            Console.WriteLine("8) Medic");
+            Console.WriteLine("9) Priest");
+            Console.WriteLine("10) Craftsman");
             Console.WriteLine();
-
             Console.Write("Selection: ");
 
-            int selectedClass;
-
-            if (!int.TryParse(
-                Console.ReadLine(),
-                out selectedClass))
+            if (!int.TryParse(Console.ReadLine(), out int selectedClass))
             {
-                Console.WriteLine(
-                    "Invalid selection."
-                );
-
+                Console.WriteLine("Invalid selection.");
                 return;
             }
 
+            Unit? selectedUnit = null;
 
-            // =========================
-            // SELECTION RESULT
-            // =========================
-
-            if (selectedClass == 1)
+            switch (selectedClass)
             {
-                Console.WriteLine();
-                Console.WriteLine(
-                    "You selected the Man-at-Arms."
-                );
+                case 1:
+                    selectedUnit = manAtArms;
+                    break;
 
-                Console.WriteLine(
-                    "Primary: " +
-                    manAtArms.primary.name
-                );
+                case 2:
+                    selectedUnit = archer;
+                    break;
 
-                Console.WriteLine(
-                    "Secondary: " +
-                    manAtArms.secondary.name
-                );
+                case 3:
+                    selectedUnit = gunslinger;
+                    break;
 
-                Console.WriteLine(
-                    "Health: " +
-                    manAtArms.health
-                );
+                case 4:
+                    selectedUnit = mage;
+                    break;
+
+                case 5:
+                    Console.WriteLine("Coming soon...");
+                    return;
+
+                default:
+                    Console.WriteLine("Invalid selection.");
+                    return;
             }
 
-            else if (selectedClass == 2)
-            {
-                Console.WriteLine();
-                Console.WriteLine(
-                    "You selected the Archer."
-                );
-
-                Console.WriteLine(
-                    "Primary: " +
-                    archer.primary.name
-                );
-
-                Console.WriteLine(
-                    "Secondary: " +
-                    archer.secondary.name
-                );
-
-                Console.WriteLine(
-                    "Health: " +
-                    archer.health
-                );
-            }
-
-            else if (selectedClass == 3)
-            {
-                Console.WriteLine();
-                Console.WriteLine(
-                    "You selected the Gunslinger."
-                );
-
-                Console.WriteLine(
-                    "Primary: " +
-                    gunslinger.primary.name
-                );
-
-                Console.WriteLine(
-                    "Secondary: " +
-                    gunslinger.secondary.name
-                );
-
-                Console.WriteLine(
-                    "Health: " +
-                    gunslinger.health
-                );
-            }
-
-            else if (selectedClass == 4)
-            {
-                Console.WriteLine();
-                Console.WriteLine(
-                    "You selected the Mage."
-                );
-
-                Console.WriteLine(
-                    "Primary: " +
-                    mage.primary.name
-                );
-
-                Console.WriteLine(
-                    "Secondary: " +
-                    mage.secondary.name
-                );
-
-                Console.WriteLine(
-                    "Health: " +
-                    mage.health
-                );
-            }
-
-            else
-            {
-                Console.WriteLine();
-                Console.WriteLine(
-                    "Coming soon..."
-                );
-            }
+            Console.WriteLine();
+            Console.WriteLine("You selected the " + selectedUnit.name + ".");
+            Console.WriteLine("Primary: " + (selectedUnit.primary?.name ?? "None"));
+            Console.WriteLine("Secondary: " + (selectedUnit.secondary?.name ?? "None"));
         }
     }
 }
